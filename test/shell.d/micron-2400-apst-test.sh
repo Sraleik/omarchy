@@ -141,6 +141,8 @@ pass "the migration no-ops once the rebuild is recorded"
 # rebuild has to fail the migration and leave the retry able to rebuild.
 reset_machine
 run_migration "$micron" 1 && fail "a failing rebuild leaves the migration pending"
+grep -q '^limine-mkinitcpio$' "$call_log" ||
+  fail "a failing rebuild leaves the migration pending"
 [[ -e $rebuild_marker ]] && fail "a failing rebuild is not recorded"
 grep -q 'state set reboot-required' "$call_log" &&
   fail "a failing rebuild does not mark reboot-required"
@@ -163,6 +165,16 @@ run_migration || fail "the migration no-ops when the parameter is already booted
   fail "the migration does not duplicate an existing drop-in"
 [[ -s $call_log ]] && fail "the migration no-ops when the parameter is already booted"
 pass "the migration no-ops when the parameter is already booted"
+
+# Typing the parameter at the Limine menu is how a freezing machine gets up
+# long enough to update; that boot says nothing about the boot image.
+reset_machine
+printf 'root=/dev/mapper/omarchy_root rw nvme_core.default_ps_max_latency_us=0\n' >"$running_cmdline"
+run_migration || fail "the migration rebuilds for a drop-in it just wrote"
+grep -q '^limine-mkinitcpio$' "$call_log" ||
+  fail "the migration rebuilds for a drop-in it just wrote"
+[[ -e $rebuild_marker ]] || fail "the migration rebuilds for a drop-in it just wrote"
+pass "the migration rebuilds for a drop-in it just wrote, whatever this boot was given"
 
 # /etc/default/limine outranks every drop-in, so a parameter set there counts
 # as configured; it still needs the rebuild it has not had.

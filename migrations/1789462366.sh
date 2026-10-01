@@ -15,7 +15,7 @@ omarchy-hw-micron-2400-nvme || exit 0
 
 wrote_dropin=0
 
-if ! grep -rqs "nvme_core.default_ps_max_latency_us=" "$dropin_dir" "$limine_conf"; then
+if ! grep -rqsE '^[^#]*nvme_core\.default_ps_max_latency_us=' "$dropin_dir" "$limine_conf"; then
   source "$OMARCHY_PATH/install/hardware/fix-micron-2400-apst.sh"
   wrote_dropin=1
 fi

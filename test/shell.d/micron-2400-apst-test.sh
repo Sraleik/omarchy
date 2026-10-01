@@ -187,6 +187,13 @@ grep -q '^limine-mkinitcpio$' "$call_log" ||
 pass "the migration honours a parameter set in /etc/default/limine"
 
 reset_machine
+printf '#%s\n' "$parameter" >"$limine_conf"
+run_migration || fail "the migration ignores a commented-out parameter"
+grep -Fxq "$parameter" "$dropin_dir/micron-2400-apst.conf" ||
+  fail "the migration ignores a commented-out parameter"
+pass "the migration ignores a commented-out parameter"
+
+reset_machine
 run_migration "$other" || fail "the migration no-ops on another drive"
 [[ -e $dropin_dir ]] && fail "the migration no-ops on another drive"
 [[ -s $call_log ]] && fail "the migration no-ops on another drive"

@@ -176,6 +176,15 @@ grep -q '^limine-mkinitcpio$' "$call_log" ||
 [[ -e $rebuild_marker ]] || fail "the migration rebuilds for a drop-in it just wrote"
 pass "the migration rebuilds for a drop-in it just wrote, whatever this boot was given"
 
+reset_machine
+printf 'root=/dev/mapper/omarchy_root rw nvme_core.default_ps_max_latency_us=0\n' >"$running_cmdline"
+run_migration "$micron" 1 && fail "a failing rebuild leaves the migration pending"
+: >"$call_log"
+run_migration || fail "the retry rebuilds in a boot given the parameter at the menu"
+grep -q '^limine-mkinitcpio$' "$call_log" ||
+  fail "the retry rebuilds in a boot given the parameter at the menu"
+pass "the retry rebuilds in a boot given the parameter at the menu"
+
 # /etc/default/limine outranks every drop-in, so a parameter set there counts
 # as configured; it still needs the rebuild it has not had.
 reset_machine
